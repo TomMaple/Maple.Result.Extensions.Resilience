@@ -83,8 +83,15 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
+    # git-cliff fails to bump a version when there is no tag yet.
+    - name: Check for release tags
+      id: tags
+      run: |
+        if [ -n "$(git tag -l 'v*')" ]; then echo "exist=true" >> "$GITHUB_OUTPUT"; else echo "exist=false" >> "$GITHUB_OUTPUT"; fi
+
     - name: Get bumped version
       id: git_cliff
+      if: steps.tags.outputs.exist == 'true'
       uses: orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff # v4.9.1
       with:
         version: v2.14.2
@@ -93,7 +100,7 @@ jobs:
     - name: Calculate version
       id: calculate_version
       run: |
-        if [ -z "$(git tag -l 'v*')" ]; then
+        if [ "$TAGS_EXIST" != "true" ]; then
           NEXT="$FIRST_VERSION"
         else
           NEXT=$(python3 -I .github/scripts/version.py next "$BUMPED")
@@ -103,6 +110,7 @@ jobs:
         echo "Package version: ${NEXT}-ci.${RUN_NUMBER}"
         echo "Informational version: ${NEXT}-ci.${RUN_NUMBER}+${COMMIT}"
       env:
+        TAGS_EXIST: ${{ steps.tags.outputs.exist }}
         BUMPED: ${{ steps.git_cliff.outputs.content }}
         RUN_NUMBER: ${{ github.run_number }}
         COMMIT: ${{ github.sha }}
