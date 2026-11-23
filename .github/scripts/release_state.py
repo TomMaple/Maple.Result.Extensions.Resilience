@@ -25,7 +25,7 @@ import urllib.error
 import urllib.request
 
 NUGET_INDEX = "https://api.nuget.org/v3-flatcontainer/{id}/index.json"
-PACKAGE_ID = "maple.result"
+PACKAGE_ID = "maple.result.extensions.resilience"
 
 
 def decide(on_nuget, local, assets, rebuilt):
